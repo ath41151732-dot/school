@@ -248,9 +248,64 @@
     </div>
   </div>
 </div>
+<!-- 시간표 만들기 모달 -->
+<div id="ttbModal" class="modal" aria-hidden="true" role="dialog" aria-label="시간표 만들기">
+  <div class="sheet">
+    <div class="head">
+      <div>시간표 만들기(템플릿 내보내기)</div>
+      <button id="ttbClose">✕</button>
+    </div>
+    <div class="body">
+      <div class="row2">
+        <label for="ttbGrade">학년</label>
+        <select id="ttbGrade">
+          <option value="1">1학년</option>
+          <option value="2">2학년</option>
+          <option value="3">3학년</option>
+        </select>
+      </div>
+      <div class="row2">
+        <label>반 범위</label>
+        <div class="inline">
+          <input id="ttbClassFrom" type="number" min="1" value="1" style="width:90px"/> 반  ~
+          <input id="ttbClassTo"   type="number" min="1" value="1" style="width:90px"/> 반
+        </div>
+      </div>
+
+      <div class="row2">
+        <label>요일/교시</label>
+        <div>
+          <label><input type="checkbox" class="ttb-day" data-key="mon" checked/> 월</label>
+          <input type="number" class="ttb-period" data-key="mon" min="1" max="12" value="7" style="width:80px"/> 교시
+          <br/>
+          <label><input type="checkbox" class="ttb-day" data-key="tue" checked/> 화</label>
+          <input type="number" class="ttb-period" data-key="tue" min="1" max="12" value="7" style="width:80px"/> 교시
+          <br/>
+          <label><input type="checkbox" class="ttb-day" data-key="wed" checked/> 수</label>
+          <input type="number" class="ttb-period" data-key="wed" min="1" max="12" value="7" style="width:80px"/> 교시
+          <br/>
+          <label><input type="checkbox" class="ttb-day" data-key="thu" checked/> 목</label>
+          <input type="number" class="ttb-period" data-key="thu" min="1" max="12" value="7" style="width:80px"/> 교시
+          <br/>
+          <label><input type="checkbox" class="ttb-day" data-key="fri" checked/> 금</label>
+          <input type="number" class="ttb-period" data-key="fri" min="1" max="12" value="7" style="width:80px"/> 교시
+          <br/>
+          <label><input type="checkbox" class="ttb-day" data-key="sat"/> 토</label>
+          <input type="number" class="ttb-period" data-key="sat" min="1" max="12" value="6" style="width:80px" disabled/> 교시
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="ttbExport" class="primary">JSON 내보내기</button>
+      </div>
+      <div class="hint">* 비어있는 칸 배열을 만들어 드려요. 나중에 과목명을 채워서 `timetable.json`으로 쓰면 됩니다.</div>
+    </div>
+  </div>
+</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', init);
+
 
 function init(){
   const locale='ko-KR', WEEK_STARTS_ON_SUN=true;
@@ -388,65 +443,6 @@ if (ttbClose){
 if (ttbExport){
   ttbExport.addEventListener('click', ttb_buildAndDownload);
 }
-
-
-  <!-- 시간표 만들기 모달 -->
-<div id="ttbModal" class="modal" aria-hidden="true" role="dialog" aria-label="시간표 만들기">
-  <div class="sheet">
-    <div class="head">
-      <div>시간표 만들기(템플릿 내보내기)</div>
-      <button id="ttbClose">✕</button>
-    </div>
-    <div class="body">
-      <div class="row2">
-        <label for="ttbGrade">학년</label>
-        <select id="ttbGrade">
-          <option value="1">1학년</option>
-          <option value="2">2학년</option>
-          <option value="3">3학년</option>
-        </select>
-      </div>
-      <div class="row2">
-        <label>반 범위</label>
-        <div class="inline">
-          <input id="ttbClassFrom" type="number" min="1" value="1" style="width:90px"/> 반  ~
-          <input id="ttbClassTo"   type="number" min="1" value="1" style="width:90px"/> 반
-        </div>
-      </div>
-
-      <div class="row2">
-        <label>요일/교시</label>
-        <div>
-          <label><input type="checkbox" class="ttb-day" data-key="mon" checked/> 월</label>
-          <input type="number" class="ttb-period" data-key="mon" min="1" max="12" value="7" style="width:80px"/> 교시
-          <br/>
-          <label><input type="checkbox" class="ttb-day" data-key="tue" checked/> 화</label>
-          <input type="number" class="ttb-period" data-key="tue" min="1" max="12" value="7" style="width:80px"/> 교시
-          <br/>
-          <label><input type="checkbox" class="ttb-day" data-key="wed" checked/> 수</label>
-          <input type="number" class="ttb-period" data-key="wed" min="1" max="12" value="7" style="width:80px"/> 교시
-          <br/>
-          <label><input type="checkbox" class="ttb-day" data-key="thu" checked/> 목</label>
-          <input type="number" class="ttb-period" data-key="thu" min="1" max="12" value="7" style="width:80px"/> 교시
-          <br/>
-          <label><input type="checkbox" class="ttb-day" data-key="fri" checked/> 금</label>
-          <input type="number" class="ttb-period" data-key="fri" min="1" max="12" value="7" style="width:80px"/> 교시
-          <br/>
-          <label><input type="checkbox" class="ttb-day" data-key="sat"/> 토</label>
-          <input type="number" class="ttb-period" data-key="sat" min="1" max="12" value="6" style="width:80px" disabled/> 교시
-        </div>
-      </div>
-
-      <div class="actions">
-        <button id="ttbExport" class="primary">JSON 내보내기</button>
-      </div>
-      <div class="hint">* 비어있는 칸 배열을 만들어 드려요. 나중에 과목명을 채워서 `timetable.json`으로 쓰면 됩니다.</div>
-    </div>
-  </div>
-</div>
-
-
-
   document.querySelectorAll('input[name="evMode"]').forEach(r=>{
     r.addEventListener('change',()=>{
       const mode=document.querySelector('input[name="evMode"]:checked').value;
@@ -1020,6 +1016,7 @@ const ROW_GLOW = {
 </script>
 </body>
 </html>
+
 
 
 
