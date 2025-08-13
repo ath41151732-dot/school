@@ -168,6 +168,7 @@
           <button id="btnExport">내보내기</button>
           <button id="btnImport">가져오기</button>
           <button id="btnClear">초기화</button>
+          <button id="btnTtBuilder">시간표 만들기</button>
           <div class="meta" id="metaCount">저장된 사용자 일정: 0건</div>
           <input type="file" id="importFile" accept="application/json" style="display:none"/>
         </div>
@@ -297,6 +298,153 @@ function init(){
   const evUrl=document.getElementById('evUrl');
   const singleRow=document.getElementById('singleRow');
   const rangeRows=document.getElementById('rangeRows');
+
+  // 시간표 만들기: 요소 참조
+const btnTtBuilder  = document.getElementById('btnTtBuilder');
+const ttbModal      = document.getElementById('ttbModal');
+const ttbClose      = document.getElementById('ttbClose');
+const ttbExport     = document.getElementById('ttbExport');
+const ttbGrade      = document.getElementById('ttbGrade');
+const ttbClassFrom  = document.getElementById('ttbClassFrom');
+const ttbClassTo    = document.getElementById('ttbClassTo');
+
+function ttb_open(){
+  // 기본값 리셋
+  ttbGrade.value = '1';
+  ttbClassFrom.value = '1';
+  ttbClassTo.value = '1';
+  // 토요일 비활성화 유지
+  document.querySelectorAll('.ttb-day').forEach(cb=>{
+    const key = cb.dataset.key;
+    const paired = document.querySelector('.ttb-period[data-key="'+key+'"]');
+    if (key==='sat'){ cb.checked=false; if(paired) paired.disabled=true; }
+  });
+
+  ttbModal.classList.add('show');
+  ttbModal.setAttribute('aria-hidden','false');
+}
+function ttb_close(){
+  ttbModal.classList.remove('show');
+  ttbModal.setAttribute('aria-hidden','true');
+}
+
+// 요일 체크에 따라 교시 입력 활성/비활성
+document.querySelectorAll('.ttb-day').forEach(cb=>{
+  cb.addEventListener('change', ()=>{
+    const key = cb.dataset.key;
+    const input = document.querySelector('.ttb-period[data-key="'+key+'"]');
+    if (!input) return;
+    input.disabled = !cb.checked;
+  });
+});
+
+// 내보내기(템플릿 JSON 생성)
+function ttb_buildAndDownload(){
+  const g = Number(ttbGrade.value || 1);
+  const cFrom = Math.max(1, Number(ttbClassFrom.value || 1));
+  const cTo   = Math.max(cFrom, Number(ttbClassTo.value || cFrom));
+
+  // 선택된 요일과 각 교시 수 수집
+  const dayKeys = ['mon','tue','wed','thu','fri','sat'];
+  const sel = [];
+  dayKeys.forEach(k=>{
+    const on  = document.querySelector('.ttb-day[data-key="'+k+'"]')?.checked;
+    const per = Number(document.querySelector('.ttb-period[data-key="'+k+'"]')?.value || 0);
+    if (on && per>0) sel.push({k, per});
+  });
+  if (sel.length===0){ alert('요일을 한 개 이상 선택해 주세요.'); return; }
+
+  // 템플릿 생성: 각 반마다 요일 배열(내용은 빈 문자열) 생성
+  const out = {};
+  for(let c=cFrom; c<=cTo; c++){
+    const key = `${g}-${c}`;
+    out[key] = {};
+    sel.forEach(({k,per})=>{
+      out[key][k] = Array.from({length: per}, ()=> ""); // ["", "", ...]
+    });
+  }
+
+  // 다운로드
+  const json = JSON.stringify(out, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `timetable_template_${g}학년_${cFrom}-${cTo}반.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  // 모달 닫기
+  ttb_close();
+}
+
+// 버튼 바인딩
+if (btnTtBuilder){
+  btnTtBuilder.addEventListener('click', ttb_open);
+}
+if (ttbClose){
+  ttbClose.addEventListener('click', ttb_close);
+}
+if (ttbExport){
+  ttbExport.addEventListener('click', ttb_buildAndDownload);
+}
+
+
+  <!-- 시간표 만들기 모달 -->
+<div id="ttbModal" class="modal" aria-hidden="true" role="dialog" aria-label="시간표 만들기">
+  <div class="sheet">
+    <div class="head">
+      <div>시간표 만들기(템플릿 내보내기)</div>
+      <button id="ttbClose">✕</button>
+    </div>
+    <div class="body">
+      <div class="row2">
+        <label for="ttbGrade">학년</label>
+        <select id="ttbGrade">
+          <option value="1">1학년</option>
+          <option value="2">2학년</option>
+          <option value="3">3학년</option>
+        </select>
+      </div>
+      <div class="row2">
+        <label>반 범위</label>
+        <div class="inline">
+          <input id="ttbClassFrom" type="number" min="1" value="1" style="width:90px"/> 반  ~
+          <input id="ttbClassTo"   type="number" min="1" value="1" style="width:90px"/> 반
+        </div>
+      </div>
+
+      <div class="row2">
+        <label>요일/교시</label>
+        <div>
+          <label><input type="checkbox" class="ttb-day" data-key="mon" checked/> 월</label>
+          <input type="number" class="ttb-period" data-key="mon" min="1" max="12" value="7" style="width:80px"/> 교시
+          <br/>
+          <label><input type="checkbox" class="ttb-day" data-key="tue" checked/> 화</label>
+          <input type="number" class="ttb-period" data-key="tue" min="1" max="12" value="7" style="width:80px"/> 교시
+          <br/>
+          <label><input type="checkbox" class="ttb-day" data-key="wed" checked/> 수</label>
+          <input type="number" class="ttb-period" data-key="wed" min="1" max="12" value="7" style="width:80px"/> 교시
+          <br/>
+          <label><input type="checkbox" class="ttb-day" data-key="thu" checked/> 목</label>
+          <input type="number" class="ttb-period" data-key="thu" min="1" max="12" value="7" style="width:80px"/> 교시
+          <br/>
+          <label><input type="checkbox" class="ttb-day" data-key="fri" checked/> 금</label>
+          <input type="number" class="ttb-period" data-key="fri" min="1" max="12" value="7" style="width:80px"/> 교시
+          <br/>
+          <label><input type="checkbox" class="ttb-day" data-key="sat"/> 토</label>
+          <input type="number" class="ttb-period" data-key="sat" min="1" max="12" value="6" style="width:80px" disabled/> 교시
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="ttbExport" class="primary">JSON 내보내기</button>
+      </div>
+      <div class="hint">* 비어있는 칸 배열을 만들어 드려요. 나중에 과목명을 채워서 `timetable.json`으로 쓰면 됩니다.</div>
+    </div>
+  </div>
+</div>
+
 
 
   document.querySelectorAll('input[name="evMode"]').forEach(r=>{
@@ -872,5 +1020,6 @@ const ROW_GLOW = {
 </script>
 </body>
 </html>
+
 
 
