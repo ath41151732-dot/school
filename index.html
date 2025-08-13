@@ -494,6 +494,47 @@ if (btnTtBuilder) btnTtBuilder.addEventListener('click', ttb_open);
 if (ttbClose)     ttbClose.addEventListener('click', ttb_close);
 if (ttbMakeFields)ttbMakeFields.addEventListener('click', ttb_buildFields);
 if (ttbExport)    ttbExport.addEventListener('click', ttb_exportJSON);
+// 요소 참조
+const btnTtBuilder = document.getElementById('btnTtBuilder');
+const ttbModal  = document.getElementById('ttbModal');
+const ttbClose  = document.getElementById('ttbClose');
+
+// 보호용: 모달 열기/닫기 최소 구현(이미 있으면 생략)
+function ttb_open(){
+  if(!ttbModal){ console.warn('#ttbModal 없음'); return; }
+  ttbModal.classList.add('show');
+  ttbModal.setAttribute('aria-hidden','false');
+}
+function ttb_close(){
+  if(!ttbModal) return;
+  ttbModal.classList.remove('show');
+  ttbModal.setAttribute('aria-hidden','true');
+}
+
+// ① 직접 바인딩
+if (btnTtBuilder){
+  btnTtBuilder.addEventListener('click', (e)=>{
+    e.preventDefault(); e.stopPropagation();
+    ttb_open();
+  });
+}
+
+// ② 이벤트 위임(혹시 나중에 버튼이 동적으로 교체돼도 동작)
+document.addEventListener('click', (e)=>{
+  const target = e.target.closest('#btnTtBuilder');
+  if (!target) return;
+  e.preventDefault(); e.stopPropagation();
+  ttb_open();
+});
+
+// 닫기 버튼(있으면)
+if (ttbClose){
+  ttbClose.addEventListener('click', (e)=>{
+    e.preventDefault(); e.stopPropagation();
+    ttb_close();
+  });
+}
+
 
 
   // 수행평가 링크
@@ -1062,6 +1103,7 @@ const ROW_GLOW = {
 </script>
 </body>
 </html>
+
 
 
 
