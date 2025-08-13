@@ -363,21 +363,24 @@ function init(){
   const rangeRows=document.getElementById('rangeRows');
 
   // 시간표 만들기: 요소 참조
-const btnTtBuilder  = document.getElementById('btnTtBuilder');
-const ttbModal      = document.getElementById('ttbModal');
-const ttbClose      = document.getElementById('ttbClose');
-const ttbExport     = document.getElementById('ttbExport');
-const ttbGrade      = document.getElementById('ttbGrade');
-const ttbClassFrom  = document.getElementById('ttbClassFrom');
-const ttbClassTo    = document.getElementById('ttbClassTo');
+const btnTtBuilder = document.getElementById('btnTtBuilder');
+const ttbModal     = document.getElementById('ttbModal');
+const ttbClose     = document.getElementById('ttbClose');
+const ttbGrade     = document.getElementById('ttbGrade');
+const ttbClass     = document.getElementById('ttbClass');
+const ttbExport    = document.getElementById('ttbExport');
+const ttbMakeFields= document.getElementById('ttbMakeFields');
+const ttbFields    = document.getElementById('ttbFields');
 
-  document.querySelectorAll('input[name="evMode"]').forEach(r=>{
-    r.addEventListener('change',()=>{
-      const mode=document.querySelector('input[name="evMode"]:checked').value;
-      singleRow.style.display = (mode==='single')?'grid':'none';
-      rangeRows.style.display  = (mode==='range')?'block':'none';
-    });
+// 요일 체크 → 교시 입력 활성/비활성
+document.querySelectorAll('.ttb-day').forEach(cb=>{
+  cb.addEventListener('change', ()=>{
+    const key = cb.dataset.key;
+    const input = document.querySelector('.ttb-period[data-key="'+key+'"]');
+    if (!input) return;
+    input.disabled = !cb.checked;
   });
+});
 
   // 수행평가 링크
   const PERF_URLS = {
@@ -1056,6 +1059,7 @@ const ROW_GLOW = {
 </script>
 </body>
 </html>
+
 
 
 
