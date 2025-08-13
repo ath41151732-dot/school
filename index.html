@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>학사 일정 달력 (시간표/수행/일정추가/저장 + Glow + 시간표 정규화)</title>
 <style>
-  :root{--bg:#0b0f19;--card:#111827;--text:#e5e7eb;--muted:#9ca3af;--accent:#4f46e5;--ring:rgba(79,70,229,.35);--today:#f59e0b;--holiday:#ef4444;--exam:#eab308;--school:#22c55e;}
+  :root{--bg:#0b0f19;--card:#111827;--text:#e5e7eb;--muted:#9ca3af;--accent:#4f46e5;--ring:rgba(79,70,229,.35);--today:#f59e0b;--holiday:#ef4444;--exam:#eab308;--school:#22c55e;--cell-gap: 6px;}
   *{box-sizing:border-box}
   html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Noto Sans KR",Segoe UI,Roboto,Arial,sans-serif}
   .wrap{max-width:1100px;margin:24px auto;padding:12px}
@@ -18,8 +18,24 @@
   button{appearance:none;border:1px solid rgba(255,255,255,.12);background:#0f172a;color:var(--text);padding:9px 12px;border-radius:12px;cursor:pointer;font-weight:700}
   button.primary{background:linear-gradient(180deg,var(--accent),#4338ca);border-color:transparent;box-shadow:0 8px 18px var(--ring)}
 
-  .weekdays,.grid{display:grid;grid-template-columns:repeat(7,1fr)}
-  .weekdays{padding:10px 12px;color:#94a3b8;font-size:13px;text-align:center}
+.weekdays,
+.grid{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:var(--cell-gap);             /* ← 헤더에도 gap을 동일 적용 */
+  padding:10px 12px;               /* ← 좌우 패딩 동일 */
+}
+
+/* 헤더 칸 텍스트가 줄바꿈/흔들림 안 나도록 */
+.weekdays > div{
+  text-align:center;
+  white-space:nowrap;
+  line-height:1;                   /* 세로중앙 시 시각 튐 방지용 */
+}
+
+/* 숫자 폭 균일화(모바일 폰트 이슈 방지) */
+.day{ font-variant-numeric: tabular-nums; }
+
   .weekdays div.active{color:#fff;font-weight:900;text-decoration:underline}
   .grid{gap:6px;padding:10px 12px 8px}
   .row .ops{position:absolute;top:8px;right:8px;display:flex;gap:6px}
@@ -848,3 +864,4 @@ const ROW_GLOW = {
 </script>
 </body>
 </html>
+
