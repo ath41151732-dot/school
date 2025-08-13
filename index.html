@@ -232,6 +232,7 @@
   <input id="evTeacherCode" type="password" inputmode="numeric" maxlength="8" placeholder="예: 0000">
 </div>
         <!-- 시간표 만들기 모달 -->
+<!-- 시간표 만들기 모달 (단일 반 + 교시별 과목 입력) -->
 <div id="ttbModal" class="modal" aria-hidden="true" role="dialog" aria-label="시간표 만들기">
   <div class="sheet">
     <div class="head">
@@ -249,15 +250,12 @@
       </div>
 
       <div class="row2">
-        <label>반 범위</label>
-        <div class="inline">
-          <input id="ttbClassFrom" type="number" min="1" value="1" style="width:90px"/> 반  ~
-          <input id="ttbClassTo"   type="number" min="1" value="1" style="width:90px"/> 반
-        </div>
+        <label for="ttbClass">반</label>
+        <input id="ttbClass" type="number" min="1" value="1" style="width:120px"/>
       </div>
 
       <div class="row2">
-        <label>요일/교시</label>
+        <label>요일/교시 수</label>
         <div>
           <label><input type="checkbox" class="ttb-day" data-key="mon" checked/> 월</label>
           <input type="number" class="ttb-period" data-key="mon" min="1" max="12" value="7" style="width:80px"/> 교시
@@ -279,10 +277,17 @@
         </div>
       </div>
 
+      <!-- 과목 입력칸이 동적으로 생성되는 영역 -->
+      <div class="row2">
+        <label>과목 입력</label>
+        <div id="ttbFields" class="tt-result"></div>
+      </div>
+
       <div class="actions">
+        <button id="ttbMakeFields">입력칸 만들기</button>
         <button id="ttbExport" class="primary">JSON 내보내기</button>
       </div>
-      <div class="hint">* 비어있는 칸 배열을 만들어 드려요. 나중에 과목명 채워서 timetable.json으로 쓰면 됩니다.</div>
+      <div class="hint">* 요일/교시 수를 정한 뒤 <b>입력칸 만들기</b>를 누르고, 교시별 과목을 입력하세요.</div>
     </div>
   </div>
 </div>
@@ -735,17 +740,14 @@ function showAction(dateStr){
 function ttb_open(){
   // 기본값 리셋
   ttbGrade.value = '1';
-  ttbClassFrom.value = '1';
-  ttbClassTo.value = '1';
-
-  // 토요일은 기본 해제 + 교시 입력 비활성
+  ttbClass.value = '1';
   document.querySelectorAll('.ttb-day').forEach(cb=>{
     const key = cb.dataset.key;
     const paired = document.querySelector('.ttb-period[data-key="'+key+'"]');
     if (key==='sat'){ cb.checked=false; if(paired) paired.disabled=true; }
-    else if (paired){ paired.disabled = !cb.checked; }
+    else if (paired){ cb.checked=true; paired.disabled=false; paired.value=7; }
   });
-
+  ttbFields.innerHTML = ''; // 입력칸 초기화
   ttbModal.classList.add('show');
   ttbModal.setAttribute('aria-hidden','false');
 }
@@ -754,46 +756,86 @@ function ttb_close(){
   ttbModal.setAttribute('aria-hidden','true');
 }
 
-// 요일 체크 → 교시 입력 활성/비활성
-document.querySelectorAll('.ttb-day').forEach(cb=>{
-  cb.addEventListener('change', ()=>{
-    const key = cb.dataset.key;
-    const input = document.querySelector('.ttb-period[data-key="'+key+'"]');
-    if (!input) return;
-    input.disabled = !cb.checked;
-  });
-});
+// 과목 입력칸 생성
+function ttb_buildFields(){
+  ttbFields.innerHTML = '';
+  const days = [
+    {k:'mon', label:'월'},
+    {k:'tue', label:'화'},
+    {k:'wed', label:'수'},
+    {k:'thu', label:'목'},
+    {k:'fri', label:'금'},
+    {k:'sat', label:'토'}
+  ];
+  let any=false;
 
-// JSON 생성/다운로드
-function ttb_buildAndDownload(){
-  const g = Number(ttbGrade.value || 1);
-  const cFrom = Math.max(1, Number(ttbClassFrom.value || 1));
-  const cTo   = Math.max(cFrom, Number(ttbClassTo.value || cFrom));
-
-  const dayKeys = ['mon','tue','wed','thu','fri','sat'];
-  const sel = [];
-  dayKeys.forEach(k=>{
+  days.forEach(({k,label})=>{
     const on  = document.querySelector('.ttb-day[data-key="'+k+'"]')?.checked;
     const per = Number(document.querySelector('.ttb-period[data-key="'+k+'"]')?.value || 0);
-    if (on && per>0) sel.push({k, per});
-  });
-  if (sel.length===0){ alert('요일을 한 개 이상 선택해 주세요.'); return; }
+    if(!on || per<=0) return;
+    any = true;
 
-  const out = {};
-  for(let c=cFrom; c<=cTo; c++){
-    const key = `${g}-${c}`;
-    out[key] = {};
-    sel.forEach(({k,per})=>{
-      out[key][k] = Array.from({length: per}, ()=> "");
-    });
+    // 요일 제목
+    const title = document.createElement('div');
+    title.style.fontWeight='900';
+    title.style.margin='8px 0 6px';
+    title.textContent = `${label}요일 (${per}교시)`;
+    ttbFields.appendChild(title);
+
+    // 입력 그리드
+    const grid = document.createElement('div');
+    grid.className = 'tt-grid';
+    for(let i=0;i<per;i++){
+      const box = document.createElement('div');
+      box.className = 'tt-period';
+      box.innerHTML = `
+        <div class="p">${i+1}교시</div>
+        <div class="c"><input class="ttb-subj" data-day="${k}" data-idx="${i}" placeholder="${i+1}교시 과목 입력"/></div>
+      `;
+      grid.appendChild(box);
+    }
+    ttbFields.appendChild(grid);
+  });
+
+  if(!any){
+    const n = document.createElement('div');
+    n.style.opacity = '.75';
+    n.textContent = '선택된 요일이 없습니다. 요일을 선택하고 교시 수를 입력하세요.';
+    ttbFields.appendChild(n);
   }
+}
+
+// JSON 생성/다운로드
+function ttb_exportJSON(){
+  const g = Number(ttbGrade.value || 1);
+  const c = Math.max(1, Number(ttbClass.value || 1));
+
+  // 사용자가 입력한 과목값들을 수집
+  const inputs = Array.from(document.querySelectorAll('.ttb-subj'));
+  if (inputs.length===0){
+    alert('먼저 "입력칸 만들기"를 눌러 과목 입력칸을 생성해 주세요.');
+    return;
+  }
+
+  // day→subjects 배열 구성
+  const buckets = {}; // { mon: ["국어","수학",...], ... }
+  inputs.forEach(inp=>{
+    const day = inp.dataset.day;
+    const idx = Number(inp.dataset.idx);
+    buckets[day] = buckets[day] || [];
+    buckets[day][idx] = (inp.value||'').trim();
+  });
+
+  // 출력 JSON (단일 반)
+  const key = `${g}-${c}`;
+  const out = { [key]: buckets };
 
   const json = JSON.stringify(out, null, 2);
   const blob = new Blob([json], {type:'application/json'});
   const url  = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `timetable_template_${g}학년_${cFrom}-${cTo}반.json`;
+  a.download = `timetable_${g}학년_${c}반.json`;
   a.click();
   URL.revokeObjectURL(url);
 
@@ -803,8 +845,8 @@ function ttb_buildAndDownload(){
 // 버튼 바인딩
 if (btnTtBuilder) btnTtBuilder.addEventListener('click', ttb_open);
 if (ttbClose)     ttbClose.addEventListener('click', ttb_close);
-if (ttbExport)    ttbExport.addEventListener('click', ttb_buildAndDownload);
-
+if (ttbMakeFields)ttbMakeFields.addEventListener('click', ttb_buildFields);
+if (ttbExport)    ttbExport.addEventListener('click', ttb_exportJSON);
 
   // 일반 선택(날짜로 이동)
   const row = e.target.closest('.row'); if(!row) return;
@@ -1014,6 +1056,7 @@ const ROW_GLOW = {
 </script>
 </body>
 </html>
+
 
 
 
